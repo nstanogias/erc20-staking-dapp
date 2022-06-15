@@ -1,0 +1,49 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* html,
+body {
+  background-color: #202225;
+  padding: 0;
+  margin: 0;
+  color: white;
+} */
+
+.spinner {
+  animation: spin 2s linear infinite;
+  z-index: 2;
+  position: absolute;
+  top: 20%;
+  left: 50%;
+  margin: -25px 0 0 -25px;
+  width: 100px;
+  height: 100px;
+}
+
+.spinner .path {
+  stroke: #29d;
+  stroke-linecap: round;
+  animation: spinner-path 1.5s ease-in-out infinite;
+}
+
+@keyframes spin {
+  100% {
+    transform: spin(360deg);
+  }
+}
+
+@keyframes spinner-path {
+  0% {
+    stroke-dasharray: 1, 150;
+    stroke-dashoffset: 0;
+  }
+  50% {
+    stroke-dasharray: 90, 150;
+    stroke-dashoffset: -35;
+  }
+  100% {
+    stroke-dasharray: 90, 150;
+    stroke-dashoffset: -124;
+  }
+}
