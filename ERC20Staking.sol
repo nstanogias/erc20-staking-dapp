@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 error TransferFailed();
 error NeedsMoreThanZero();
 
-contract Staking14 is ReentrancyGuard, Ownable {
+contract Staking17 is ReentrancyGuard, Ownable {
     IERC20 public s_rewardsToken;
     IERC20 public s_stakingToken;
 
@@ -19,6 +19,7 @@ contract Staking14 is ReentrancyGuard, Ownable {
     uint256 public constant REWARD_RATE = 100;
     uint256 public s_lastUpdateTime;
     uint256 public s_rewardPerTokenStored;
+    address[] public addresses;
     uint256 private s_totalSupply;
 
     mapping(address => uint256) public s_userRewardPerTokenPaid;
@@ -64,6 +65,7 @@ contract Staking14 is ReentrancyGuard, Ownable {
         nonReentrant
         moreThanZero(amount)
     {
+        addresses.push(msg.sender);
         s_totalSupply += amount;
         s_stakes[msg.sender] += amount;
         emit Staked(msg.sender, amount);
@@ -152,4 +154,39 @@ contract Staking14 is ReentrancyGuard, Ownable {
     function getSender() public view returns (address) {
       return msg.sender;
     }
+
+    function getOwner() public view returns (address) {
+      return owner();
+    }
+
+    function isOwner(address account) public view returns (bool) {
+      return owner() == account;
+    }
+
+    function getUsersStaked(address account) public view returns (address[] memory, uint[] memory) {
+      require(owner() == account, "You are not the owner");
+      address[] memory mAddresses = new address[](addresses.length);
+      uint[] memory mStakes = new uint[](addresses.length);
+
+      for(uint i=0; i<addresses.length; i++) {
+        mAddresses[i] = addresses[i];
+        mStakes[i] = s_stakes[addresses[i]];
+      }
+
+      return (mAddresses, mStakes);
+    }
+
+    function getUsersRewards(address account) public view returns (address[] memory, uint[] memory) {
+      require(owner() == account, "You are not the owner");
+      address[] memory mAddresses = new address[](addresses.length);
+      uint[] memory mRewards = new uint[](addresses.length);
+
+      for(uint i=0; i<addresses.length; i++) {
+        mAddresses[i] = addresses[i];
+        mRewards[i] = s_rewards[addresses[i]];
+      }
+
+      return (mAddresses, mRewards);
+    }
+    
 }
