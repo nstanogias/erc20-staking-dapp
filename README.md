@@ -111,6 +111,22 @@ Rewards are calculated based on
 - How much time has passed
 - the `REWARD_RATE` configured in the contract.
 
+The contrat is emitting 100 tokens per second and disperse them to all token stakers
+
+```
+100 reward tokens / second
+staked: 50 staked tokens, 20 staked tokens, 30 staked tokens
+rewards: 50 reward tokens, 20 reward tokens, 30 reward tokens
+
+staked: 100, 50, 20, 30 (total = 200)
+rewards: 50, 25, 10, 15
+
+5 seconds, person1 had 100 tokens staked = 500 reward tokens
+6 seconds, person2 have 100 tokens staked
+
+Then person1: 550 reward tokens and person2 50 reward tokens
+```
+
 ## Deploying the smart contract
 
 We use [thirdweb deploy](https://portal.thirdweb.com/thirdweb-deploy) to deploy the Staking smart contract by running:
