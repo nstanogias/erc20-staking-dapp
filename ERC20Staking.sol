@@ -8,11 +8,11 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 error TransferFailed();
 error NeedsMoreThanZero();
 
-contract Staking17 is ReentrancyGuard, Ownable {
+contract Staking19 is ReentrancyGuard, Ownable {
     IERC20 public s_rewardsToken;
     IERC20 public s_stakingToken;
 
-    // This is the reward token per minute
+    // This is the reward token per second
     // Which will be multiplied by the tokens the user staked divided by the total
     // This is a steady reward rate of the platform
     // That means that the more users stake, the less the reward is for everyone who is staking.
@@ -20,11 +20,15 @@ contract Staking17 is ReentrancyGuard, Ownable {
     uint256 public s_lastUpdateTime;
     uint256 public s_rewardPerTokenStored;
     address[] public addresses;
+    // Minimal staking period in seconds
+    uint256 public minStakePeriod = 120; //2 mins
+
     uint256 private s_totalSupply;
 
     mapping(address => uint256) public s_userRewardPerTokenPaid;
     mapping(address => uint256) public s_rewards;
     mapping(address => uint256) public s_stakes;
+    mapping(address => uint256) public s_lastTimeOfRewardsClaimed;
 
     event Staked(address indexed user, uint256 indexed amount);
     event WithdrewStake(address indexed user, uint256 indexed amount);
@@ -65,7 +69,9 @@ contract Staking17 is ReentrancyGuard, Ownable {
         nonReentrant
         moreThanZero(amount)
     {
-        addresses.push(msg.sender);
+        if(!(s_stakes[msg.sender] > 0)){
+            addresses.push(msg.sender);
+        }
         s_totalSupply += amount;
         s_stakes[msg.sender] += amount;
         emit Staked(msg.sender, amount);
@@ -93,12 +99,32 @@ contract Staking17 is ReentrancyGuard, Ownable {
      * @notice User claims their tokens
      */
     function claimReward() external updateReward(msg.sender) nonReentrant {
+      require(
+            claimRewardsTimer(msg.sender) == 0,
+            "Tried to claim rewards too soon"
+        );
+        s_lastTimeOfRewardsClaimed[msg.sender] = block.timestamp;
         uint256 reward = s_rewards[msg.sender];
         s_rewards[msg.sender] = 0;
         emit RewardsClaimed(msg.sender, reward);
         bool success = s_rewardsToken.transfer(msg.sender, reward);
         if (!success) {
             revert TransferFailed();
+        }
+    }
+
+    // Utility function that returns the timer for claiming rewards
+    function claimRewardsTimer(address _user)
+        public
+        view
+        returns (uint256 _timer)
+    {
+        if (s_lastTimeOfRewardsClaimed[_user] + minStakePeriod <= block.timestamp) {
+            return 0;
+        } else {
+            return
+                (s_lastTimeOfRewardsClaimed[_user] + minStakePeriod) -
+                block.timestamp;
         }
     }
 
@@ -183,7 +209,7 @@ contract Staking17 is ReentrancyGuard, Ownable {
 
       for(uint i=0; i<addresses.length; i++) {
         mAddresses[i] = addresses[i];
-        mRewards[i] = s_rewards[addresses[i]];
+        mRewards[i] = s_rewardsToken.balanceOf(addresses[i]);
       }
 
       return (mAddresses, mRewards);
