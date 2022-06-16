@@ -32,8 +32,8 @@ const Home: NextPage = () => {
   const [stakedTokens, setStakedTokens] = useState<BigNumber>();
   const [loading, setLoading] = useState<boolean>(false);
   const [isOwner, setIsQwner] = useState<boolean | undefined>(undefined);
-  const [stakerAddresses, setStakerAddresses] = useState<any[][]>([]);
-  const [stakerRewards, setStakerRewards] = useState<any[][]>([]);
+  const [stakerAddresses, setStakerAddresses] = useState<[string[], BigNumber[]]>([[], []]);
+  const [stakerRewards, setStakerRewards] = useState<[string[], BigNumber[]]>([[], []]);
 
   // const signer = useSigner();
   // const sdk = ThirdwebSDK.fromSigner(signer!);
