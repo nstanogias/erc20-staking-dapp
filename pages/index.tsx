@@ -7,8 +7,7 @@ import { BigNumber, ethers } from 'ethers';
 import Spinner from '../components/Spinner/Spinner';
 
 const tokenDropContractAddress = '0x196314F89A06bC1E7d7B161a92317bCed56e0d77';
-const tokenRewardContractAddress = '0xF1776ad3ddA88aA52c5291E53952A987E917c2D0';
-const stakingContractAddress = '0x3680279899eFa325eFFAC400b82f5d43d5DB9f35';
+const stakingContractAddress = '0xa585386576370376942CA0C82e491e0D38740C0c';
 
 const style = {
   button:
@@ -23,20 +22,18 @@ const Home: NextPage = () => {
 
   // Contract Hooks
   const tokenDropContract = useTokenDrop(tokenDropContractAddress);
-  const rewardTokenContract = useToken(tokenRewardContractAddress);
   const { contract, isLoading } = useContract(stakingContractAddress);
 
   // Load Owned Tokens
   const { data: ownedTokens } = useTokenBalance(tokenDropContract, address);
-
-  // Load Balance of Reward Token
-  const { data: rewardTokenBalance } = useTokenBalance(rewardTokenContract, address);
 
   const [claimableRewards, setClaimableRewards] = useState<BigNumber>();
   const [claimedRewards, setClaimedRewards] = useState<BigNumber>();
   const [stakedTokens, setStakedTokens] = useState<BigNumber>();
   const [loading, setLoading] = useState<boolean>(false);
   const [isOwner, setIsQwner] = useState<boolean | undefined>(undefined);
+  const [stakerAddresses, setStakerAddresses] = useState<any[][]>([]);
+  const [stakerRewards, setStakerRewards] = useState<any[][]>([]);
 
   // const signer = useSigner();
   // const sdk = ThirdwebSDK.fromSigner(signer!);
@@ -59,17 +56,23 @@ const Home: NextPage = () => {
 
     const loadOwnerView = async () => {
       try {
+        setLoading(true);
         const usersStaked = await contract.call('getUsersStaked', address);
         console.log(usersStaked);
         const usersRewards = await contract.call('getUsersRewards', address);
         console.log(usersRewards);
+        setStakerAddresses(usersStaked);
+        setStakerRewards(usersRewards);
       } catch (error) {
         console.log(error);
+      } finally {
+        setLoading(false);
       }
     };
 
     const loadUserView = async () => {
       try {
+        setLoading(true);
         const claimableRewards = await contract.call('earned', address);
         console.log('Claimable rewards', ethers.utils.formatUnits(claimableRewards, 18));
         const claimedRewards = await contract.call('getRewardsTokensBalance', address);
@@ -81,6 +84,8 @@ const Home: NextPage = () => {
         setStakedTokens(staked);
       } catch (error) {
         console.log(error);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -144,51 +149,75 @@ const Home: NextPage = () => {
     <div className='flex flex-col items-center justify-center w-screen h-screen'>
       {(isLoading || loading) && <Spinner />}
       {address ? (
-        <button className={style.button} onClick={disconnectWallet}>
-          Disconnect Wallet
-        </button>
+        <>
+          <button className={style.button} onClick={disconnectWallet}>
+            Disconnect Wallet
+          </button>
+          {isOwner && (
+            <div>
+              {stakerAddresses[0] && stakerAddresses[0].length ? (
+                <ul className='mt-4'>
+                  {stakerAddresses[0].map((addr, index) => (
+                    <li key={index}>
+                      Addresss {addr} has stakes {ethers.utils.formatUnits(stakerAddresses[1][index], 18)}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div>There are no stakes yet</div>
+              )}
+              {stakerRewards[0] && stakerRewards[0].length ? (
+                <ul className='mt-4'>
+                  {stakerRewards[0].map((addr, index) => (
+                    <li key={index}>
+                      Addresss {addr} has rewards {ethers.utils.formatUnits(stakerRewards[1][index], 18)}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div>There are no rewards yet</div>
+              )}
+            </div>
+          )}
+          {isOwner === false && (
+            <>
+              <button
+                className={style.button}
+                onClick={() => claimTokens(prompt('How many tokens do you want to claim?', ''))}
+              >
+                Claim tokens
+              </button>
+              <button
+                className={style.button}
+                onClick={() => stakeTokens(prompt('How many tokens do you want to stake?', ''))}
+              >
+                Stake tokens
+              </button>
+              <button
+                className={style.button}
+                onClick={() => withdrawTokens(prompt('How many tokens do you want to withdraw?', ''))}
+              >
+                Withdraw tokens
+              </button>
+              <button className={style.button} onClick={() => claimRewards()}>
+                Get rewards
+              </button>
+              <p>Your address: {address}</p>
+              {ownedTokens && <div>Ownned tokens (NTOK): {ownedTokens.displayValue}</div>}
+              {stakedTokens && <div>Staked tokens (NTOK): {ethers.utils.formatUnits(stakedTokens, 18)}</div>}
+              {claimableRewards && (
+                <div>Claimable rewards (CGTOK): {ethers.utils.formatUnits(claimableRewards, 18)}</div>
+              )}
+              {claimedRewards && <div>Claimed rewards (CGTOK): {ethers.utils.formatUnits(claimedRewards, 18)}</div>}
+            </>
+          )}
+        </>
       ) : (
         <div className='flex flex-col items-center justify-center w-screen h-screen'>
           <button className={style.button} onClick={connectWithMetamask}>
             Connect Wallet
           </button>
         </div>
-      )}
-      {isOwner && address ? (
-        <>
-          <div>Owner view</div>
-        </>
-      ) : (
-        address && (
-          <>
-            <button
-              className={style.button}
-              onClick={() => claimTokens(prompt('How many tokens do you want to claim?', ''))}
-            >
-              Claim tokens
-            </button>
-            <button
-              className={style.button}
-              onClick={() => stakeTokens(prompt('How many tokens do you want to stake?', ''))}
-            >
-              Stake tokens
-            </button>
-            <button
-              className={style.button}
-              onClick={() => withdrawTokens(prompt('How many tokens do you want to withdraw?', ''))}
-            >
-              Withdraw tokens
-            </button>
-            <button className={style.button} onClick={() => claimRewards()}>
-              Get rewards
-            </button>
-            <p>Your address: {address}</p>
-            {ownedTokens && <div>Ownned tokens (NTOK): {ownedTokens.displayValue}</div>}
-            {stakedTokens && <div>Staked tokens (NTOK): {ethers.utils.formatUnits(stakedTokens, 18)}</div>}
-            {claimableRewards && <div>Claimable rewards (CGTOK): {ethers.utils.formatUnits(claimableRewards, 18)}</div>}
-            {claimedRewards && <div>Claimed rewards (CGTOK): {ethers.utils.formatUnits(claimedRewards, 18)}</div>}
-          </>
-        )
       )}
     </div>
   );
