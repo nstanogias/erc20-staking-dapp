@@ -66,9 +66,78 @@ Before users can stake tokens, they need to buy some. There are two different er
 
 Users can buy and stake NTOK and they are rewared by the smart contract with CGTOK.
 
+We have two mappings to track how many tokens and how many rewards are staked by which address:
+
+```solidity
+    // Mapping of User Address to staking amount
+   mapping(address => uint256) public s_stakes;
+
+    // Mapping of User Address to reward amount
+   mapping(address => uint256) public s_rewards;
+```
+
+We also have another mapping to track when was the last time that a user claimed his/her rewards:
+
+```solidity
+    // Last time a user claimed rewards
+   mapping(address => uint256) public s_lastTimeOfRewardsClaimed;
+```
+
+We are using this information in order to define a minimum period that needs to elapse (2 minutes), in order for a user to be able to claim rewards again.
+
 When the user calls the `stake` function on the smart contract, they smart contract transfers NTOK tokens from their wallet to the contract:
 
 ```solidity
         // Transfer tokens from the wallet to the Smart contract
         s_stakingToken.transferFrom(msg.sender, address(this), amount);
+```
+
+### Withdrawing
+
+Withdrawing is essentially the opposite of staking.
+
+We `transfer` the token back to the wallet address that staked it (that we store in the mapping).
+
+```solidity
+        // Transfer the token back to the withdrawer
+        s_stakingToken.transfer(msg.sender, amount);
+```
+
+### Rewards
+
+Rewards are calculated based on
+
+- How many tokens the wallet has staked
+- How much time has passed
+- the `REWARD_RATE` configured in the contract.
+
+## Deploying the smart contract
+
+We use [thirdweb deploy](https://portal.thirdweb.com/thirdweb-deploy) to deploy the Staking smart contract by running:
+
+```bash
+npx thirdweb deploy
+```
+
+This provides us with a link to deploy the contract via the [thirdweb dashboard](https://thirdweb.com/dashboard)
+
+## Front-end Application
+
+On the front-end, we connect to all three of our smart contracts and interact with them using thirdweb's SDKs.
+
+### Configuring the ThirdwebProvider
+
+We wrap our application in the `ThirdwebProvider` component to access all of the React SDK's hooks and configure the network we want to support.
+
+```jsx
+// This is the chainId your dApp will work on.
+const activeChainId = ChainId.Rinkeby;
+
+function MyApp({ Component, pageProps }: AppProps) {
+  return (
+    <ThirdwebProvider desiredChainId={activeChainId}>
+      <Component {...pageProps} />
+    </ThirdwebProvider>
+  );
+}
 ```
