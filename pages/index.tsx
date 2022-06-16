@@ -69,28 +69,24 @@ const Home: NextPage = () => {
         setLoading(false);
       }
     };
-
-    const loadUserView = async () => {
-      try {
-        setLoading(true);
-        const claimableRewards = await contract.call('earned', address);
-        console.log('Claimable rewards', ethers.utils.formatUnits(claimableRewards, 18));
-        const claimedRewards = await contract.call('getRewardsTokensBalance', address);
-        console.log('Claimed rewards', ethers.utils.formatUnits(claimedRewards, 18));
-        const staked = await contract.call('getStaked', address);
-        console.log('Staked tokens', ethers.utils.formatUnits(staked, 18));
-        setClaimableRewards(claimableRewards);
-        setClaimedRewards(claimedRewards);
-        setStakedTokens(staked);
-      } catch (error) {
-        console.log(error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    isOwner ? loadOwnerView() : loadUserView();
+    isOwner ? loadOwnerView() : updateUserView();
   }, [address, contract, isOwner]);
+
+  const updateUserView = async () => {
+    try {
+      const claimableRewards = await contract?.call('earned', address);
+      console.log('Claimable rewards', ethers.utils.formatUnits(claimableRewards, 18));
+      const claimedRewards = await contract?.call('getRewardsTokensBalance', address);
+      console.log('Claimed rewards', ethers.utils.formatUnits(claimedRewards, 18));
+      const staked = await contract?.call('getStaked', address);
+      console.log('Staked tokens', ethers.utils.formatUnits(staked, 18));
+      setClaimableRewards(claimableRewards);
+      setClaimedRewards(claimedRewards);
+      setStakedTokens(staked);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   const claimTokens = async (num: string | null) => {
     if (num === null) return;
@@ -113,6 +109,7 @@ const Home: NextPage = () => {
       const sal = await tokenDropContract?.setAllowance(stakingContractAddress, +num);
       const result = await contract?.call('stake', ethers.BigNumber.from(+num).mul(price));
       alert('Staked tokens successfully');
+      updateUserView();
     } catch (error) {
       console.error(error);
     } finally {
@@ -126,6 +123,7 @@ const Home: NextPage = () => {
       setLoading(true);
       const result = await contract?.call('withdraw', ethers.BigNumber.from(+num).mul(price));
       alert('Tokens are withdrawn successfully');
+      updateUserView();
     } catch (error) {
       console.error(error);
     } finally {
@@ -138,6 +136,7 @@ const Home: NextPage = () => {
       setLoading(true);
       const result = await contract?.call('claimReward');
       alert('Rewards claimed successfully');
+      updateUserView();
     } catch (error) {
       console.error(error);
     } finally {
