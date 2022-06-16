@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 error TransferFailed();
 error NeedsMoreThanZero();
 
-contract Staking19 is ReentrancyGuard, Ownable {
+contract StakingFinal is ReentrancyGuard, Ownable {
     IERC20 public s_rewardsToken;
     IERC20 public s_stakingToken;
 

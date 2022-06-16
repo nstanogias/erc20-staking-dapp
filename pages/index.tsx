@@ -7,7 +7,7 @@ import { BigNumber, ethers } from 'ethers';
 import Spinner from '../components/Spinner/Spinner';
 
 const tokenDropContractAddress = '0x196314F89A06bC1E7d7B161a92317bCed56e0d77';
-const stakingContractAddress = '0xa585386576370376942CA0C82e491e0D38740C0c';
+const stakingContractAddress = '0x10D88F6141a08c3BfEa059f38c829dEd286b5E0a';
 
 const style = {
   button:
