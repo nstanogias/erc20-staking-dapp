@@ -2,9 +2,11 @@ import { useAddress, useContract, useDisconnect, useMetamask, useTokenDrop } fro
 import { ThirdwebSDK } from '@thirdweb-dev/sdk';
 import { useSigner, useToken, useTokenBalance } from '@thirdweb-dev/react';
 import type { NextPage } from 'next';
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { BigNumber, ethers } from 'ethers';
 import Spinner from '../components/Spinner/Spinner';
+import { ApiContext } from '../context/ApiContext';
+import AdminInfo from '../components/AdminInfo';
 
 const tokenDropContractAddress = '0x196314F89A06bC1E7d7B161a92317bCed56e0d77';
 const stakingContractAddress = '0x10D88F6141a08c3BfEa059f38c829dEd286b5E0a';
@@ -20,6 +22,8 @@ const Home: NextPage = () => {
   const connectWithMetamask = useMetamask();
   const disconnectWallet = useDisconnect();
 
+  const { setStakerAddresses, setStakerRewards } = useContext(ApiContext);
+
   // Contract Hooks
   const tokenDropContract = useTokenDrop(tokenDropContractAddress);
   const { contract, isLoading } = useContract(stakingContractAddress);
@@ -32,8 +36,6 @@ const Home: NextPage = () => {
   const [stakedTokens, setStakedTokens] = useState<BigNumber>();
   const [loading, setLoading] = useState<boolean>(false);
   const [isOwner, setIsQwner] = useState<boolean | undefined>(undefined);
-  const [stakerAddresses, setStakerAddresses] = useState<[string[], BigNumber[]]>([[], []]);
-  const [stakerRewards, setStakerRewards] = useState<[string[], BigNumber[]]>([[], []]);
 
   // const signer = useSigner();
   // const sdk = ThirdwebSDK.fromSigner(signer!);
@@ -152,32 +154,7 @@ const Home: NextPage = () => {
           <button className={style.button} onClick={disconnectWallet}>
             Disconnect Wallet
           </button>
-          {isOwner && (
-            <div>
-              {stakerAddresses[0] && stakerAddresses[0].length ? (
-                <ul className='mt-4'>
-                  {stakerAddresses[0].map((addr, index) => (
-                    <li key={index}>
-                      Addresss {addr} has stakes {ethers.utils.formatUnits(stakerAddresses[1][index], 18)}
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <div>There are no stakes yet</div>
-              )}
-              {stakerRewards[0] && stakerRewards[0].length ? (
-                <ul className='mt-4'>
-                  {stakerRewards[0].map((addr, index) => (
-                    <li key={index}>
-                      Addresss {addr} has rewards {ethers.utils.formatUnits(stakerRewards[1][index], 18)}
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <div>There are no rewards yet</div>
-              )}
-            </div>
-          )}
+          {isOwner && <AdminInfo />}
           {isOwner === false && (
             <>
               <button
